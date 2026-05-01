@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTG — Registrar Usuario</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Css/style.css' %}">
+<style>
+  .register-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .register-span2 { grid-column: span 2; }
+  @media (max-width: 640px) {
+    .register-grid { grid-template-columns: 1fr; }
+    .register-span2 { grid-column: span 1; }
+  }
+  .auth-select {
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+
+    <div class="auth-brand">
+      <div class="auth-logo-wrap">
+        <img src="{% static 'img/logo.png' %}" onerror="this.onerror=null;this.style.display='none'" alt="GTG" style="height:100px;width:auto;display:block;margin-bottom:20px;object-fit:contain;">
+      </div>
+      <div class="auth-brand-kicker">Administración del sistema</div>
+      <h1>Registro de Usuarios</h1>
+      <p>Solo el administrador puede registrar nuevos colaboradores en la plataforma de auditoría de calidad.</p>
+      <div class="auth-brand-footer">© 2026 Global Technology Group — GTG</div>
+    </div>
+
+    <div class="auth-pane">
+      <div class="auth-title">Nuevo usuario</div>
+      <div class="auth-sub">Completa los datos del colaborador a registrar.</div>
+
+      <div class="auth-error" id="regPageError"></div>
+      <div class="auth-success" id="regPageSuccess"></div>
+
+      <div class="register-grid">
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">Nombre completo <span style="color:var(--red)">*</span></label>
+          <input class="auth-input" id="adminRegName" type="text" placeholder="Nombre y apellido">
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">Rol <span style="color:var(--red)">*</span></label>
+          <select class="auth-input auth-select" id="adminRegRole">
+            <option value="">— Seleccionar rol —</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Auditor">Auditor</option>
+            <option value="Operador">Operador</option>
+          </select>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">Código de empleado <span style="color:var(--red)">*</span></label>
+          <input class="auth-input" id="adminRegEmployeeId" type="text" inputmode="numeric" placeholder="0002" maxlength="10">
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">Departamento</label>
+          <input class="auth-input" id="adminRegDept" type="text" placeholder="Control de Calidad">
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">Teléfono</label>
+          <input class="auth-input" id="adminRegPhone" type="text" inputmode="numeric" placeholder="809-000-0000" maxlength="12">
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">Cédula de identidad</label>
+          <input class="auth-input" id="adminRegCedula" type="text" inputmode="numeric" placeholder="000-0000000-0" maxlength="13">
+        </div>
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">Correo electrónico</label>
+          <input class="auth-input" id="adminRegEmail" type="email" placeholder="usuario@gtg.com">
+        </div>
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">Contraseña inicial <span style="color:var(--red)">*</span></label>
+          <input class="auth-input" id="adminRegPassword" type="password" placeholder="Contraseña que usará para iniciar sesión" autocomplete="new-password">
+        </div>
+
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+        <button class="auth-submit" type="button" onclick="submitRegisterPage()" style="flex:1;min-width:160px;">
+          Registrar usuario
+        </button>
+        <button class="auth-submit secondary" type="button" onclick="window.location.href='{% url 'bitacora:index' %}'" style="flex:1;min-width:140px;">
+          Cancelar
+        </button>
+      </div>
+
+      <div id="adminCreateMsg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;background:var(--green-soft);color:var(--green);border:1px solid #86EFAC;font-weight:700;font-size:13px;"></div>
+
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'app.js' %}"></script>
+<script>
+  // Solo el administrador puede acceder a esta página
+  (function() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = '{% url "bitacora:login" %}';
+      return;
+    }
+    if (session.role !== 'Administrador') {
+      window.location.href = '{% url "bitacora:index" %}';
+    }
+  })();
+
+  function submitRegisterPage() {
+    const name     = document.getElementById('adminRegName').value.trim();
+    const role     = document.getElementById('adminRegRole').value;
+    const empId    = onlyDigits(document.getElementById('adminRegEmployeeId').value.trim());
+    const dept     = document.getElementById('adminRegDept').value.trim();
+    const phone    = formatPhone(document.getElementById('adminRegPhone').value.trim());
+    const cedula   = formatCedula(document.getElementById('adminRegCedula').value.trim());
+    const email    = document.getElementById('adminRegEmail').value.trim().toLowerCase();
+    const password = document.getElementById('adminRegPassword').value;
+
+    const errEl     = document.getElementById('regPageError');
+    const successEl = document.getElementById('regPageSuccess');
+    errEl.classList.remove('show');
+    successEl.classList.remove('show');
+
+    if (!name || !role || !empId || !password) {
+      errEl.textContent = 'Nombre, rol, código de empleado y contraseña son obligatorios.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (empId.length < 1) {
+      errEl.textContent = 'El código de empleado solo puede contener números.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (phone && phone.length > 0 && phone.length !== 12) {
+      errEl.textContent = 'El teléfono debe estar en formato 809-000-0000.';
+      errEl.classList.add('show');
+      return;
+    }
+    if (cedula && cedula.length > 0 && cedula.length !== 13) {
+      errEl.textContent = 'La cédula debe estar en formato 000-0000000-0.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    const users = getStoredUsers();
+    if (users.some(u => String(u.employeeId) === String(empId))) {
+      errEl.textContent = 'Ese código de empleado ya está registrado.';
+      errEl.classList.add('show');
+      return;
+    }
+
+    users.push({
+      name,
+      role,
+      employeeId: empId,
+      dept,
+      phone,
+      cedula,
+      email,
+      password,
+      defaultPassword: '1234',
+      joined: new Date().toLocaleDateString('es-DO'),
+      active: true,
+      lastLoginAt: null
+    });
+    saveStoredUsers(users);
+
+    successEl.textContent = 'Usuario registrado correctamente. Redirigiendo al sistema...';
+    successEl.classList.add('show');
+    errEl.classList.remove('show');
+
+    setTimeout(() => {
+      window.location.href = '{% url "bitacora:index" %}';
+    }, 1800);
+  }
+</script>
+</body>
+</html>

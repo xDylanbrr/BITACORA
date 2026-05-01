@@ -1,0 +1,1113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTG — Auditoría de Calidad</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Css/style.css' %}">
+</head>
+
+<body>
+<div id="appShell">
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">
+      <img src="{% static 'img/logo.png' %}" alt="GTG" style="height:42px;width:auto;display:block;">
+    </div>
+    <div class="brand-title">Auditoría de Calidad — Formularios Digitales</div>
+  </div>
+
+  <div class="topbar-date" id="topbarDate"></div>
+
+  <div class="topbar-user">
+    <button class="user-chip" type="button" onclick="toggleUserMenu(event)">
+      <div class="user-avatar" id="userAvatar">GT</div>
+      <div class="user-meta">
+        <div class="user-name" id="userDisplayName">Invitado</div>
+        <div class="user-role" id="userDisplayRole">Sin sesión</div>
+      </div>
+    </button>
+
+    <div class="user-menu" id="userMenu">
+      <div class="user-menu-card" style="display:flex;align-items:center;gap:12px;">
+        <div id="userMenuPhotoWrap" style="flex-shrink:0;width:44px;height:44px;border-radius:10px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:white;overflow:hidden;">
+          <span id="userMenuInitials">GT</span>
+        </div>
+
+        <div>
+          <div class="user-menu-label">Sesión actual</div>
+          <div class="user-menu-name" id="userMenuName">Invitado</div>
+          <div class="user-menu-email" id="userMenuEmail">Sin sesión activa</div>
+        </div>
+      </div>
+
+      <div class="user-menu-actions">
+        <button class="user-menu-btn" type="button" onclick="goToProfile();closeUserMenu()">Ver perfil</button>
+        <button class="user-menu-btn logout" type="button" onclick="logoutUser()">Cerrar sesión</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="nav-tabs-bar">
+  <div class="nav-tab active" id="navFormulario" onclick="showPage('formulario',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M8 7h8M8 12h8M8 17h4"/>
+    </svg>
+    Formularios
+  </div>
+
+  <div class="nav-tab" id="navHistorial" onclick="showPage('historial',this)">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 3v18h18"/>
+      <path d="M7 15l3-3 3 2 4-6"/>
+    </svg>
+    Historial
+  </div>
+
+
+</div>
+
+<div class="page-panel active" id="pageFormulario">
+
+  <div class="area-tabs">
+    <div class="area-tab active" id="tab-ext" data-area="ext" onclick="setArea('ext',this)">⬡ Extrusión</div>
+    <div class="area-tab" id="tab-imp" data-area="imp" onclick="setArea('imp',this)">▣ Impresión</div>
+    <div class="area-tab" id="tab-con" data-area="con" onclick="setArea('con',this)">◈ Conversión</div>
+  </div>
+
+  <div class="main">
+
+    <div id="panel-ext" class="form-panel active">
+      <div class="turno-hero">
+        <div class="turno-row-top">
+          <div class="turno-left">
+            <div class="turno-hero-label">Turno Activo</div>
+            <div class="turno-hero-sub">Asignación automática según la hora actual</div>
+            <div class="turno-hero-auto-badge"><span class="pulse-dot"></span> Turno detectado automáticamente</div>
+          </div>
+        </div>
+
+        <div class="turno-row-bottom">
+          <div class="turno-selector">
+            <button class="turno-btn" data-turno="A" onclick="setTurno('ext','A',this)">TURNO A</button>
+            <button class="turno-btn" data-turno="B" onclick="setTurno('ext','B',this)">TURNO B</button>
+            <button class="turno-btn" data-turno="C" onclick="setTurno('ext','C',this)">TURNO C</button>
+          </div>
+
+          <div class="turno-info-box" id="ext-turno-info">
+            <div class="turno-info-dot" id="ext-turno-dot"></div>
+            <div class="turno-info-text">
+              <div class="turno-info-name" id="ext-turno-nombre">—</div>
+              <div class="turno-info-time" id="ext-turno-horario">Detectando turno…</div>
+            </div>
+          </div>
+
+          <div class="turno-clock-inline">
+            <div>
+              <div class="turno-clock-time" id="ext-clock">--:--:--</div>
+              <div class="turno-clock-date" id="ext-clock-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Datos de la Orden <span class="badge badge-blue">GTG-CAL-FRM-12</span></div>
+
+        <div class="section-body">
+          <div class="section-desc">Completa la información de la orden de producción antes de iniciar el registro.</div>
+
+          <div class="process-row-clean">
+            <div class="process-toggle-title">Procesos a trabajar desde este registro</div>
+
+            <div class="process-checks">
+              <div class="pill-check process-pill">
+                <input type="checkbox" id="ext-enable-imp" checked>
+                <label for="ext-enable-imp">Usar Impresión</label>
+              </div>
+
+              <div class="pill-check process-pill">
+                <input type="checkbox" id="ext-enable-con" checked>
+                <label for="ext-enable-con">Usar Conversión</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-grid col4">
+            <div class="field">
+              <div class="field-label">Fecha <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="date" id="ext-fecha" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Hora Inicio <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="time" id="ext-hora" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Máquina <span class="req">*</span></div>
+              <select id="ext-maquina" required>
+                <option value="">— Seleccionar máquina —</option>
+                <option value="CHYI YANG A">CHYI YANG A</option>
+                <option value="CHYI YANG B">CHYI YANG B</option>
+                <option value="CHYI YANG C">CHYI YANG C</option>
+                <option value="CHYI YANG D">CHYI YANG D</option>
+                <option value="RULLY">RULLY</option>
+                <option value="HYPLAS">HYPLAS</option>
+                <option value="LUNG MENG-1">LUNG MENG-1</option>
+                <option value="LUNG MENG-2">LUNG MENG-2</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="field-label">MO # <span class="req">*</span></div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Número de orden" id="ext-mo" maxlength="17">
+                <button type="button" class="scan-btn" title="Escanear MO" onclick="scanField('mo','ext')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">Ítem</div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Código de ítem" id="ext-item" maxlength="8">
+                <button type="button" class="scan-btn" title="Escanear producto / ítem" onclick="scanField('item','ext')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field field-span3">
+              <div class="field-label">Descripción del Producto <span class="req">*</span></div>
+              <input type="text" placeholder="Descripción libre del producto" id="ext-desc" maxlength="150">
+            </div>
+          </div>
+
+          <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+            <div class="field-label" style="margin-bottom:10px;">
+              Tipo de Material <span class="badge badge-red" style="margin-left:4px;">Obligatorio</span>
+            </div>
+
+            <div class="pill-group">
+              <div class="pill-check"><input type="checkbox" id="ext-pig"><label for="ext-pig">Pigmentado</label></div>
+              <div class="pill-check"><input type="checkbox" id="ext-clear"><label for="ext-clear">Clear (Transparente)</label></div>
+              <div class="pill-check"><input type="checkbox" id="ext-emb"><label for="ext-emb">Embobinado</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Verificación de Extrusión</div>
+
+        <div class="section-body">
+          <div class="section-desc">Registra cada muestra inspeccionada. Usa OK, ND o N/A según corresponda.</div>
+
+          <div class="table-wrap">
+            <table class="dtable" id="ext-tbl">
+              <thead>
+                <tr>
+                  <th>#</th><th>Fecha</th><th>Hora</th>
+                  <th>Ancho Fuelle (pulg)</th><th>Calibre (milésimas pulg)</th><th>Peso x Calibre (g)</th>
+                  <th>Color</th><th>Tratado</th><th>Resistencia</th><th>Bloqueo</th>
+                  <th>Fundido</th><th>Transparencia</th><th>Contaminación</th>
+                  <th>Identif. Mezcla</th><th>Cores</th>
+                  <th>Cant. Rechazada</th><th>Comentarios</th>
+                </tr>
+              </thead>
+              <tbody id="ext-body"></tbody>
+            </table>
+          </div>
+
+          <div class="row-actions" style="margin-top:10px;">
+            <button class="add-row-btn" onclick="addExtRow()" type="button">＋ Agregar fila</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-section">
+        <div class="sig-title">Validación de Turno</div>
+
+        <div class="sig-body">
+          <div class="sig-sub">Asignación automática según la hora actual.</div>
+
+          <div class="sig-turno-display">
+            <div class="sig-turno-badge" id="ext-sig-badge">—</div>
+            <div class="sig-turno-text">
+              <strong id="ext-sig-title">Detectando turno…</strong>
+              <span id="ext-sig-sub">Se asignará automáticamente</span>
+            </div>
+          </div>
+
+          <div class="sig-cards">
+            <div class="sig-card">
+              <div class="sig-card-head">Auditor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Auditor <span class="req">*</span></div>
+                  <select class="person-select" id="ext-op-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+                <div class="sig-line"></div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head">Supervisor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Supervisor <span class="req">*</span></div>
+                  <select class="person-select" id="ext-sup-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+                <div class="sig-line"></div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head auditor">Auditor de Calidad</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Auditor Asignado</div>
+                  <div class="readonly-field locked-auditor" id="ext-aud-nombre">—</div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">Operario en turno</div>
+                  <div class="readonly-field" id="ext-aud-op">—</div>
+                </div>
+
+                <div class="sig-line"></div>
+                <div class="auditor-note">Completado automáticamente con tu sesión</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="saveForm('ext')">Guardar registro</button>
+        <button class="btn btn-ghost role-export" type="button" onclick="exportAreaData('ext')">Exportar CSV</button>
+        <button class="btn btn-ghost role-print" type="button" onclick="printArea('ext','Extrusión')">Imprimir</button>
+      </div>
+    </div>
+
+    <div id="panel-imp" class="form-panel">
+      <div class="turno-hero">
+        <div class="turno-row-top">
+          <div class="turno-left">
+            <div class="turno-hero-label">Turno Activo</div>
+            <div class="turno-hero-sub">Asignación automática según la hora actual</div>
+            <div class="turno-hero-auto-badge"><span class="pulse-dot"></span> Turno detectado automáticamente</div>
+          </div>
+        </div>
+
+        <div class="turno-row-bottom">
+          <div class="turno-selector">
+            <button class="turno-btn" data-turno="A" onclick="setTurno('imp','A',this)">TURNO A</button>
+            <button class="turno-btn" data-turno="B" onclick="setTurno('imp','B',this)">TURNO B</button>
+            <button class="turno-btn" data-turno="C" onclick="setTurno('imp','C',this)">TURNO C</button>
+          </div>
+
+          <div class="turno-info-box" id="imp-turno-info">
+            <div class="turno-info-dot" id="imp-turno-dot"></div>
+            <div class="turno-info-text">
+              <div class="turno-info-name" id="imp-turno-nombre">—</div>
+              <div class="turno-info-time" id="imp-turno-horario">Detectando turno…</div>
+            </div>
+          </div>
+
+          <div class="turno-clock-inline">
+            <div>
+              <div class="turno-clock-time" id="imp-clock">--:--:--</div>
+              <div class="turno-clock-date" id="imp-clock-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Datos de la Orden <span class="badge badge-blue">GTG-CAL-FRM-13</span></div>
+
+        <div class="section-body">
+          <div class="section-desc">Completa la información de la orden de producción.</div>
+
+          <div class="field-grid col4">
+            <div class="field">
+              <div class="field-label">Fecha <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="date" id="imp-fecha" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Hora Inicio <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="time" id="imp-hora" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Máquina <span class="req">*</span></div>
+              <select id="imp-maquina" required>
+                <option value="">— Seleccionar máquina —</option>
+                <option value="FLEXO TECH">FLEXO TECH</option>
+                <option value="LUNG MENG IMPRESIÓN">LUNG MENG IMPRESIÓN</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="field-label">MO # <span class="req">*</span></div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Número de orden" id="imp-mo" maxlength="17">
+                <button type="button" class="scan-btn" title="Escanear MO" onclick="scanField('mo','imp')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">Ítem</div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Código de ítem" id="imp-item" maxlength="8">
+                <button type="button" class="scan-btn" title="Escanear producto / ítem" onclick="scanField('item','imp')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field field-span3">
+              <div class="field-label">Descripción del Producto <span class="req">*</span></div>
+              <input type="text" placeholder="Descripción libre del producto" id="imp-desc" maxlength="150">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Inspección de Calidad de Impresión</div>
+
+        <div class="section-body">
+          <div class="section-desc">Registra la inspección de cada muestra.</div>
+
+          <div class="table-wrap">
+            <table class="dtable" id="imp-tbl">
+              <thead>
+                <tr>
+                  <th>#</th><th>Fecha</th><th>Hora</th>
+                  <th>Adherencia Tinta</th><th>Inspección Visual</th><th>Validación Corrida</th>
+                  <th>Código de Barras</th><th>Precorte</th><th>Repetición (pulg)</th>
+                  <th>Libre Arrugas</th><th>Placa Despegada</th><th>Libre Retinte</th>
+                  <th>Libre Bloqueo</th><th>Verif. Pantone</th><th>Textos Legibles</th>
+                  <th>Comp. Estándar</th><th>Comentarios</th>
+                </tr>
+              </thead>
+              <tbody id="imp-body"></tbody>
+            </table>
+          </div>
+
+          <div class="row-actions" style="margin-top:10px;">
+            <button class="add-row-btn" onclick="addImpRow()" type="button">＋ Agregar fila</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-section">
+        <div class="sig-title">Validación de Turno</div>
+
+        <div class="sig-body">
+          <div class="sig-sub">Asignación automática según la hora actual.</div>
+
+          <div class="sig-turno-display">
+            <div class="sig-turno-badge" id="imp-sig-badge">—</div>
+            <div class="sig-turno-text">
+              <strong id="imp-sig-title">Detectando turno…</strong>
+              <span id="imp-sig-sub">Se asignará automáticamente</span>
+            </div>
+          </div>
+
+          <div class="sig-cards">
+            <div class="sig-card">
+              <div class="sig-card-head">Auditor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Auditor <span class="req">*</span></div>
+                  <select class="person-select" id="imp-op-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head">Supervisor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Supervisor <span class="req">*</span></div>
+                  <select class="person-select" id="imp-sup-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head auditor">Auditor de Calidad</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Auditor Asignado</div>
+                  <div class="readonly-field locked-auditor" id="imp-aud-nombre">—</div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">Operario en turno</div>
+                  <div class="readonly-field" id="imp-aud-op">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="saveForm('imp')">Guardar registro</button>
+        <button class="btn btn-ghost role-export" type="button" onclick="exportAreaData('imp')">Exportar CSV</button>
+        <button class="btn btn-ghost role-print" type="button" onclick="printArea('imp','Impresión')">Imprimir</button>
+      </div>
+    </div>
+
+    <div id="panel-con" class="form-panel">
+      <div class="turno-hero">
+        <div class="turno-row-top">
+          <div class="turno-left">
+            <div class="turno-hero-label">Turno Activo</div>
+            <div class="turno-hero-sub">Asignación automática según la hora actual</div>
+            <div class="turno-hero-auto-badge"><span class="pulse-dot"></span> Turno detectado automáticamente</div>
+          </div>
+        </div>
+
+        <div class="turno-row-bottom">
+          <div class="turno-selector">
+            <button class="turno-btn" data-turno="A" onclick="setTurno('con','A',this)">TURNO A</button>
+            <button class="turno-btn" data-turno="B" onclick="setTurno('con','B',this)">TURNO B</button>
+            <button class="turno-btn" data-turno="C" onclick="setTurno('con','C',this)">TURNO C</button>
+          </div>
+
+          <div class="turno-info-box" id="con-turno-info">
+            <div class="turno-info-dot" id="con-turno-dot"></div>
+            <div class="turno-info-text">
+              <div class="turno-info-name" id="con-turno-nombre">—</div>
+              <div class="turno-info-time" id="con-turno-horario">Detectando turno…</div>
+            </div>
+          </div>
+
+          <div class="turno-clock-inline">
+            <div>
+              <div class="turno-clock-time" id="con-clock">--:--:--</div>
+              <div class="turno-clock-date" id="con-clock-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Datos de la Orden <span class="badge badge-blue">GTG-CAL-FRM-02 + FRM-15</span></div>
+
+        <div class="section-body">
+          <div class="section-desc">Completa la información de la orden de producción.</div>
+
+          <div class="field-grid col4">
+            <div class="field">
+              <div class="field-label">Fecha <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="date" id="con-fecha" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Hora Inicio <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+              <input type="time" id="con-hora" readonly class="auto-field">
+            </div>
+
+            <div class="field">
+              <div class="field-label">Máquina <span class="req">*</span></div>
+              <select id="con-maquina" required>
+                <option value="">— Seleccionar máquina —</option>
+                <option value="ROAN">ROAN</option>
+                <option value="HUDSON SHARP">HUDSON SHARP</option>
+                <option value="BOLSEADORA 1">BOLSEADORA 1</option>
+                <option value="BOLSEADORA 2">BOLSEADORA 2</option>
+                <option value="BOLSEADORA 3">BOLSEADORA 3</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="field-label">MO # <span class="req">*</span></div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Número de orden" id="con-mo" maxlength="17">
+                <button type="button" class="scan-btn" title="Escanear MO" onclick="scanField('mo','con')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">Ítem</div>
+              <div class="scan-input-wrap">
+                <input type="text" placeholder="Código de ítem" id="con-item" maxlength="8">
+                <button type="button" class="scan-btn" title="Escanear producto / ítem" onclick="scanField('item','con')">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 7h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field field-span3">
+              <div class="field-label">Descripción del Producto <span class="req">*</span></div>
+              <input type="text" placeholder="Descripción libre del producto" id="con-desc" maxlength="150">
+            </div>
+
+            <div class="field field-span2">
+              <div class="process-toggle-box">
+                <div class="process-toggle-title">Validación especial</div>
+
+                <div class="pill-group">
+                  <div class="pill-check">
+                    <input type="checkbox" id="con-tshirt-toggle" onchange="toggleTshirt()">
+                    <label for="con-tshirt-toggle">Producto tipo T-Shirt</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Inspección de Calidad de Conversión</div>
+
+        <div class="section-body">
+          <div class="section-desc">Registra la inspección de cada muestra.</div>
+
+          <div class="table-wrap">
+            <table class="dtable" id="con-tbl">
+              <thead>
+                <tr>
+                  <th>#</th><th>Fecha</th><th>Hora</th>
+                  <th>Ancho</th><th>Largo</th><th>Fuelle</th><th>Calibre</th>
+                  <th>Sellado</th><th>Troquel</th><th>Perforación</th>
+                  <th>Impresión</th><th>Corte</th><th>Empaque</th>
+                  <th>Etiqueta</th><th>Código</th><th>Fondo</th><th>Lateral</th>
+                  <th id="con-th-sf">Sello Frontal</th>
+                  <th id="con-th-sm">Sello Mango</th>
+                  <th id="con-th-li">Largo Inicial</th>
+                  <th id="con-th-lf">Largo Final</th>
+                  <th id="con-th-el">Elongación</th>
+                  <th>Cant. Producida</th><th>Cant. Rechazada</th><th>Cant. Revisada</th>
+                  <th>Defecto</th><th>Comentarios</th>
+                </tr>
+              </thead>
+              <tbody id="con-body"></tbody>
+            </table>
+          </div>
+
+          <div class="row-actions" style="margin-top:10px;">
+            <button class="add-row-btn" onclick="addConRow()" type="button">＋ Agregar fila</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-section">
+        <div class="sig-title">Validación de Turno</div>
+
+        <div class="sig-body">
+          <div class="sig-sub">Asignación automática según la hora actual.</div>
+
+          <div class="sig-turno-display">
+            <div class="sig-turno-badge" id="con-sig-badge">—</div>
+            <div class="sig-turno-text">
+              <strong id="con-sig-title">Detectando turno…</strong>
+              <span id="con-sig-sub">Se asignará automáticamente</span>
+            </div>
+          </div>
+
+          <div class="sig-cards">
+            <div class="sig-card">
+              <div class="sig-card-head">Auditor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Auditor <span class="req">*</span></div>
+                  <select class="person-select" id="con-op-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head">Supervisor</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Seleccionar Supervisor <span class="req">*</span></div>
+                  <select class="person-select" id="con-sup-nombre"><option value="">— Seleccionar —</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="sig-card">
+              <div class="sig-card-head auditor">Auditor de Calidad</div>
+              <div class="sig-card-body">
+                <div class="field">
+                  <div class="field-label">Auditor Asignado</div>
+                  <div class="readonly-field locked-auditor" id="con-aud-nombre">—</div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label">Operario en turno</div>
+                  <div class="readonly-field" id="con-aud-op">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-primary" onclick="saveForm('con')">Guardar registro</button>
+        <button class="btn btn-ghost role-export" type="button" onclick="exportAreaData('con')">Exportar CSV</button>
+        <button class="btn btn-ghost role-print" type="button" onclick="printArea('con','Conversión')">Imprimir</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="page-panel" id="pageHistorial">
+  <div class="area-tabs" style="visibility:hidden;height:0;padding:0;margin:0;overflow:hidden;"></div>
+  <div class="main">
+    <div class="form-panel active" style="border-radius:var(--radius);">
+
+      <!-- CABECERA ROJA -->
+      <div style="background:var(--red);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-30px;right:-50px;width:180px;height:280px;background:rgba(255,255,255,0.05);transform:rotate(-35deg);pointer-events:none;"></div>
+        <div>
+          <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:4px;">Consulta general</div>
+          <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:20px;color:white;line-height:1.2;">Historial de registros</div>
+          <div style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;background:rgba(255,255,255,0.15);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.85);">
+            <span class="pulse-dot"></span> Registros guardados en el sistema
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;position:relative;z-index:1;">
+          <button class="btn role-export" type="button" onclick="exportHistoryCSV()" style="background:rgba(255,255,255,0.14);color:white;border:1.5px solid rgba(255,255,255,0.4);font-size:12px;padding:0 16px;height:36px;border-radius:6px;">
+            Exportar CSV
+          </button>
+          <button class="btn role-print" type="button" onclick="printHistory()" style="background:rgba(255,255,255,0.14);color:white;border:1.5px solid rgba(255,255,255,0.4);font-size:12px;padding:0 16px;height:36px;border-radius:6px;">
+            Imprimir
+          </button>
+        </div>
+      </div>
+
+      <!-- SECCIÓN FILTROS -->
+      <div class="section">
+        <div class="section-title">Filtros de búsqueda</div>
+        <div class="section-body">
+          <div class="section-desc">Filtra por área, fecha, MO, máquina, ítem, auditor, operador o supervisor.</div>
+          <div class="field-grid col4">
+            <div class="field">
+              <div class="field-label">Buscar</div>
+              <input type="text" id="historySearch" placeholder="MO, ítem, máquina, auditor..." oninput="renderHistoryRecords()">
+            </div>
+            <div class="field">
+              <div class="field-label">Área</div>
+              <select id="historyArea" onchange="renderHistoryRecords()">
+                <option value="">Todas las áreas</option>
+                <option value="ext">Extrusión</option>
+                <option value="imp">Impresión</option>
+                <option value="con">Conversión</option>
+              </select>
+            </div>
+            <div class="field">
+              <div class="field-label">Desde</div>
+              <input type="date" id="historyFrom" onchange="renderHistoryRecords()">
+            </div>
+            <div class="field">
+              <div class="field-label">Hasta</div>
+              <input type="date" id="historyTo" onchange="renderHistoryRecords()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN TABLA -->
+      <!-- SECCIÓN HISTORIAL SEPARADO -->
+      <div class="section">
+        <div class="section-title" style="color:var(--red-dark)">Historial de Extrusión</div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th>Guardado</th><th>Ronda #</th><th>Fecha</th><th>Hora</th><th>Máquina</th><th>MO</th><th>Ítem</th><th>Turno</th><th>Auditor</th><th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="historyBodyExt"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" style="color:var(--blue-dark)">Historial de Impresión</div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th>Guardado</th><th>Ronda #</th><th>Fecha</th><th>Hora</th><th>Máquina</th><th>MO</th><th>Ítem</th><th>Turno</th><th>Auditor</th><th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="historyBodyImp"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title" style="color:var(--green-dark)">Historial de Conversión</div>
+        <div class="table-wrap">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th>Guardado</th><th>Ronda #</th><th>Fecha</th><th>Hora</th><th>Máquina</th><th>MO</th><th>Ítem</th><th>Turno</th><th>Auditor</th><th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="historyBodyCon"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<div class="page-panel" id="pagePerfil">
+  <div class="profile-container">
+
+    <div class="profile-header">
+      <div class="profile-photo-wrap" id="profilePhotoWrap" onclick="triggerPhotoUpload()">
+        <div class="profile-avatar-big" id="profileAvatarBig">GT</div>
+        <img id="profilePhoto" src="" alt="" style="display:none;width:72px;height:72px;border-radius:16px;object-fit:cover;">
+        <div class="profile-photo-overlay">📷</div>
+      </div>
+
+      <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+
+      <div class="profile-info">
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-role-badge" id="profileRoleBadge">
+          <span id="profileRoleText">—</span>
+        </div>
+        <div class="profile-email" id="profileEmail">—</div>
+      </div>
+
+      <button class="profile-edit-btn" id="profileEditBtn" onclick="toggleEditProfile()">Editar perfil</button>
+    </div>
+
+    <div class="profile-edit-card" id="profileEditCard" style="display:none;">
+      <div class="profile-card-title">Editar información personal</div>
+
+      <div class="profile-card-body">
+        <div class="profile-field-grid">
+          <div class="profile-field">
+            <div class="profile-label">Nombre completo</div>
+            <input type="text" id="editName" class="profile-edit-input">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Departamento</div>
+            <input type="text" id="editDept" class="profile-edit-input">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Teléfono</div>
+            <input type="text" id="editPhone" maxlength="12" inputmode="numeric" class="profile-edit-input" placeholder="809-000-0000">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Cédula de identidad</div>
+            <input type="text" id="editCedula" maxlength="13" inputmode="numeric" class="profile-edit-input" placeholder="000-0000000-0">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Código de empleado</div>
+            <input type="text" id="editEmployeeId" inputmode="numeric" maxlength="10" class="profile-edit-input" placeholder="0001">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Correo electrónico</div>
+            <input type="email" id="editEmail" class="profile-edit-input">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="saveEditProfile()" style="background:var(--red);color:white;border:none;padding:11px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Guardar cambios</button>
+          <button onclick="toggleEditProfile()" style="background:var(--border-light);color:var(--text);border:1px solid var(--border);padding:11px 24px;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">Cancelar</button>
+        </div>
+
+        <div class="profile-edit-success" id="editSuccess" style="display:none;margin-top:12px;background:var(--green-soft);border:1px solid #86EFAC;color:var(--green);padding:10px 14px;border-radius:8px;font-weight:600;font-size:13px;">
+          Cambios guardados correctamente.
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">Seguridad</div>
+
+      <div class="profile-card-body">
+        <div class="profile-field-grid">
+          <div class="profile-field">
+            <div class="profile-label">Contraseña actual</div>
+            <input type="password" id="currentPassword" class="profile-edit-input" placeholder="Actual">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Nueva contraseña</div>
+            <input type="password" id="newPassword" class="profile-edit-input" placeholder="Nueva contraseña">
+          </div>
+
+          <div class="profile-field">
+            <div class="profile-label">Confirmar nueva contraseña</div>
+            <input type="password" id="confirmPassword" class="profile-edit-input" placeholder="Confirmar">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <button onclick="changeOwnPassword()" style="background:var(--red);color:white;border:none;padding:11px 24px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+            Cambiar contraseña
+          </button>
+        </div>
+
+        <div class="profile-edit-success" id="passwordChangeMsg" style="display:none;margin-top:12px;background:var(--green-soft);border:1px solid #86EFAC;color:var(--green);padding:10px 14px;border-radius:8px;font-weight:600;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">Información personal</div>
+
+      <div class="profile-card-body">
+        <div class="profile-field-grid">
+          <div class="profile-field"><div class="profile-label">Nombre completo</div><div class="profile-value" id="profileFullName">—</div></div>
+          <div class="profile-field"><div class="profile-label">Rol / Puesto</div><div class="profile-value" id="profileRoleVal">—</div></div>
+          <div class="profile-field"><div class="profile-label">Correo electrónico</div><div class="profile-value" id="profileEmailVal">—</div></div>
+          <div class="profile-field"><div class="profile-label">Departamento</div><div class="profile-value" id="profileDept">—</div></div>
+          <div class="profile-field"><div class="profile-label">Teléfono</div><div class="profile-value" id="profilePhone">—</div></div>
+          <div class="profile-field"><div class="profile-label">Cédula de identidad</div><div class="profile-value" id="profileCedula">—</div></div>
+          <div class="profile-field"><div class="profile-label">Código de empleado</div><div class="profile-value" id="profileEmployeeId">—</div></div>
+          <div class="profile-field"><div class="profile-label">Fecha de registro</div><div class="profile-value" id="profileJoined">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">Acceso y permisos</div>
+
+      <div class="profile-card-body">
+        <div id="permStandard">
+          <div class="profile-field-grid">
+            <div class="profile-field"><div class="profile-label">Tipo de acceso</div><div class="profile-value" id="profileAccess">—</div></div>
+          </div>
+        </div>
+
+        <div id="permAdmin" style="display:none;">
+          <div class="profile-field-grid">
+            <div class="profile-field"><div class="profile-label">Nivel de acceso</div><div class="profile-value" id="profileAccessAdmin">—</div></div>
+            <div class="profile-field"><div class="profile-label">Puesto en la plataforma</div><div class="profile-value" id="profilePuestoAdmin">—</div></div>
+            <div class="profile-field"><div class="profile-label">Editar campos de auditor</div><div class="profile-value" id="profileCanAudit">—</div></div>
+            <div class="profile-field"><div class="profile-label">Visible como Operador</div><div class="profile-value" id="profileIsOp">—</div></div>
+            <div class="profile-field"><div class="profile-label">Visible como Supervisor</div><div class="profile-value" id="profileIsSup">—</div></div>
+            <div class="profile-field"><div class="profile-label">Crear/editar usuarios</div><div class="profile-value" id="profileCanManage">—</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-card-title">Actividad de la sesión</div>
+
+      <div class="profile-card-body">
+        <div class="profile-stats-grid">
+          <div class="profile-stat">
+            <div class="profile-stat-num" id="statRegistros">0</div>
+            <div class="profile-stat-label">Registros guardados</div>
+          </div>
+
+          <div class="profile-stat">
+            <div class="profile-stat-num" id="statAreas">0</div>
+            <div class="profile-stat-label">Áreas usadas</div>
+          </div>
+
+          <div class="profile-stat">
+            <div class="profile-stat-num" id="statSesion">0m</div>
+            <div class="profile-stat-label">Tiempo de sesión</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-panel hidden" id="adminPanel">
+      <div class="admin-panel-head">Administración</div>
+
+      <div class="admin-panel-body">
+        <div class="admin-note">
+          Solo el administrador puede registrar usuarios y atender solicitudes de restablecimiento de contraseña.
+        </div>
+
+        <div class="admin-actions-bar">
+          <button class="btn btn-primary" type="button" onclick="window.location.href='{% url 'bitacora:registrar' %}'">
+            Registrar usuario
+          </button>
+        </div>
+
+        <div class="section" style="margin-top:18px;">
+          <div class="section-title">Solicitudes de restablecimiento</div>
+          <div class="section-body">
+            <div id="resetRequestsList" class="reset-requests-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:center;margin-top:8px;">
+      <button onclick="logoutUser()" style="background:var(--red-soft);color:var(--red-dark);border:1.5px solid var(--red-soft-border);padding:12px 32px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;">
+        Cerrar sesión
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<datalist id="colorListGTG">
+  <option value="Blanco">
+  <option value="Negro">
+  <option value="Azul">
+  <option value="Azul Marino">
+  <option value="Rojo">
+  <option value="Verde">
+  <option value="Amarillo">
+  <option value="Naranja">
+  <option value="Morado">
+  <option value="Rosado">
+  <option value="Gris">
+  <option value="Plata">
+  <option value="Dorado">
+  <option value="Transparente">
+  <option value="Natural">
+  <option value="Beige">
+</datalist>
+
+<!-- Premium Toast Container -->
+<div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;"></div>
+
+
+<div class="scanner-modal hidden" id="scannerModal">
+  <div class="scanner-box">
+    <div class="scanner-head">
+      <strong id="scannerTitle">Escanear código</strong>
+      <button type="button" class="scanner-close" onclick="closeScanner()">✕</button>
+    </div>
+
+    <div class="scanner-video-wrap">
+      <video id="scannerVideo" autoplay playsinline muted></video>
+      <div class="scanner-frame"></div>
+    </div>
+
+    <div class="scanner-actions">
+      <button type="button" class="btn btn-ghost" onclick="closeScanner()">Cancelar</button>
+    </div>
+
+    <div class="scanner-help">Coloca el código de barras frente a la cámara de la tablet.</div>
+  </div>
+</div>
+
+</div>
+
+<script src="{% static 'app.js' %}?v=4004"></script>
+
+<script>
+  (function() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = '{% url "bitacora:login" %}';
+    }
+  })();
+</script>
+
+
+<!-- Custom Confirm Modal -->
+<div id="gtgConfirmModal" style="
+  display:none;
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(10,10,20,0.65);
+  backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;
+">
+  <div style="
+    background:#1a1a2e;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:16px;
+    padding:32px 36px;
+    max-width:420px;width:90%;
+    box-shadow:0 24px 64px rgba(0,0,0,0.5);
+    text-align:center;
+    animation:gtgModalIn 0.2s ease;
+  ">
+    <div id="gtgConfirmIcon" style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <div id="gtgConfirmTitle" style="font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;color:#fff;margin-bottom:8px;"></div>
+    <div id="gtgConfirmMsg" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:rgba(255,255,255,0.65);margin-bottom:24px;line-height:1.5;"></div>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button id="gtgConfirmCancel" style="
+        flex:1;max-width:140px;height:42px;
+        background:rgba(255,255,255,0.08);
+        color:rgba(255,255,255,0.7);
+        border:1.5px solid rgba(255,255,255,0.12);
+        border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;
+        font-family:'Plus Jakarta Sans',sans-serif;
+        transition:all 0.15s;
+      " onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        Cancelar
+      </button>
+      <button id="gtgConfirmOk" style="
+        flex:1;max-width:140px;height:42px;
+        background:linear-gradient(135deg,#c0392b,#922b21);
+        color:#fff;border:none;
+        border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;
+        font-family:'Plus Jakarta Sans',sans-serif;
+        box-shadow:0 4px 16px rgba(192,57,43,0.4);
+        transition:all 0.15s;
+      " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+<style>
+@keyframes gtgModalIn {
+  from { opacity:0; transform:scale(0.9) translateY(-10px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+#gtgConfirmModal.show { display:flex !important; }
+</style>
+
+</body>
+</html>

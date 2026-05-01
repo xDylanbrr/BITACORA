@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTG — Acceso al Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Css/style.css' %}">
+</head>
+<body>
+
+<div class="auth-shell">
+  <div class="auth-card">
+
+    <div class="auth-brand">
+      <div class="auth-logo-wrap">
+        <img src="{% static 'img/logo.png' %}" alt="GTG"
+             style="height:100px;width:auto;display:block;margin-bottom:20px;object-fit:contain;">
+      </div>
+      <div class="auth-brand-kicker">Sistema de Control de Calidad</div>
+      <h1>Auditoría Digital de Producción</h1>
+      <p>Plataforma de registro y trazabilidad para los procesos de Extrusión, Impresión y Conversión.</p>
+      <div class="auth-brand-footer">© 2026 Global Technology Group — GTG</div>
+    </div>
+
+    <div class="auth-pane">
+      <div class="auth-title">Bienvenido</div>
+      <div class="auth-sub">Accede con tu código de empleado y contraseña.</div>
+
+      {% if error %}
+      <div class="auth-error show">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" action="{% url 'bitacora:login' %}">
+        {% csrf_token %}
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.codigo_empleado.label }}</label>
+          {{ form.codigo_empleado }}
+          {% if form.codigo_empleado.errors %}
+          <div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.codigo_empleado.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.password.label }}</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+          <div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.password.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        <button class="auth-submit" type="submit">Entrar al formulario</button>
+      </form>
+
+      <div class="auth-note">Solo puedes acceder con usuarios creados por el administrador.</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,292 @@
+{% extends 'bitacora/base.html' %}
+{% load static %}
+
+{% block title %}GTG — Impresión{% endblock %}
+
+{% block head_extra %}
+<style>
+.mo-wrap,.item-wrap{display:flex;align-items:stretch;border:1px solid var(--border);border-radius:8px;overflow:hidden;height:38px;}
+.mo-wrap:focus-within,.item-wrap:focus-within{outline:2px solid var(--red);outline-offset:-1px;}
+.locked-seg{padding:0 10px;background:#f3f4f6;color:#6b7280;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;display:flex;align-items:center;user-select:none;cursor:default;white-space:nowrap;flex-shrink:0;}
+.locked-seg+input,.locked-seg~.locked-seg{border-left:1px solid var(--border);}
+input+.locked-seg{border-left:1px solid var(--border);}
+.seg-input{border:none;outline:none;background:transparent;padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center;letter-spacing:2px;width:60px;}
+.item-seg-input{border:none;outline:none;background:transparent;padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:14px;letter-spacing:2px;width:72px;}
+.barcode-btn{padding:0 10px;background:#f3f4f6;border-left:1px solid var(--border);cursor:pointer;display:flex;align-items:center;color:#6b7280;flex-shrink:0;}
+.barcode-btn:hover{background:#e5e7eb;color:#374151;}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<form method="post" action="{% url 'bitacora:impresion' %}" id="formImpresion">
+{% csrf_token %}
+
+<input type="hidden" name="turno"       id="input-turno" value="{{ turno_actual }}">
+<input type="hidden" name="fecha"       id="input-fecha" value="{{ fecha_hoy }}">
+<input type="hidden" name="hora_inicio" id="input-hora"  value="{{ hora_ahora }}">
+
+<!-- ── Selector de turno ─────────────────────────── -->
+<div class="turno-hero">
+  <div class="turno-row-top">
+    <div class="turno-left">
+      <div class="turno-hero-label">Turno Activo — Impresión</div>
+      <div class="turno-hero-sub">Asignación automática según la hora actual</div>
+      <div class="turno-hero-auto-badge"><span class="pulse-dot"></span> Turno detectado automáticamente</div>
+    </div>
+  </div>
+  <div class="turno-row-bottom">
+    <div class="turno-selector">
+      <button type="button" class="turno-btn {% if turno_actual == 'A' %}active{% endif %}"
+              onclick="setTurnoInput('A', this)">TURNO A</button>
+      <button type="button" class="turno-btn {% if turno_actual == 'B' %}active{% endif %}"
+              onclick="setTurnoInput('B', this)">TURNO B</button>
+      <button type="button" class="turno-btn {% if turno_actual == 'C' %}active{% endif %}"
+              onclick="setTurnoInput('C', this)">TURNO C</button>
+    </div>
+    <div class="turno-info-box">
+      <div class="turno-info-dot" style="background:#22c55e;"></div>
+      <div class="turno-info-text">
+        <div class="turno-info-name" id="turno-nombre">
+          {% if turno_actual == 'A' %}Primer turno{% elif turno_actual == 'B' %}Segundo turno{% else %}Tercer turno{% endif %}
+        </div>
+        <div class="turno-info-time" id="turno-horario">
+          {% if turno_actual == 'A' %}6:00 AM – 2:00 PM{% elif turno_actual == 'B' %}2:00 PM – 10:00 PM{% else %}10:00 PM – 6:00 AM{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="turno-clock-inline">
+      <div class="turno-clock-time" id="clock">--:--:--</div>
+      <div class="turno-clock-date" id="clock-date"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Datos de la orden ─────────────────────────── -->
+<div class="section">
+  <div class="section-title">Datos de la Orden <span class="badge badge-blue">GTG-CAL-FRM-IMP</span></div>
+  <div class="section-body">
+    <div class="field-grid col4">
+
+      <div class="field">
+        <div class="field-label">Fecha <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+        <input type="date" id="display-fecha" class="auto-field" readonly>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Hora Inicio <span class="badge badge-amber" style="margin-left:4px;font-size:9px;">Auto</span></div>
+        <input type="time" id="display-hora" class="auto-field" readonly>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Máquina <span class="req">*</span></div>
+        <select name="maquina" required>
+          <option value="">— Seleccionar máquina —</option>
+          {% for m in maquinas %}
+          <option value="{{ m }}">{{ m }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- MO con prefijo y sufijo bloqueados -->
+      <div class="field">
+        <div class="field-label">MO # <span class="req">*</span></div>
+        <div class="mo-wrap">
+          <span class="locked-seg">M00000</span>
+          <input type="text" id="mo-middle" class="seg-input"
+                 placeholder="0000" autocomplete="off"
+                 data-pre="M00000" data-suf="-0002" data-hidden="draft-mo"
+                 oninput="handleMoInput(this)"
+                 onpaste="handleMoPaste(event)">
+          <span class="locked-seg">-0002</span>
+          <button type="button" class="barcode-btn" title="Abrir cámara para escanear código de barras"
+                  onclick="openBarcodeScanner('mo-middle')">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="2" height="16"/><rect x="7" y="4" width="1" height="16"/>
+              <rect x="10" y="4" width="2" height="16"/><rect x="14" y="4" width="1" height="16"/>
+              <rect x="17" y="4" width="3" height="16"/>
+            </svg>
+          </button>
+        </div>
+        <input type="hidden" name="mo" id="draft-mo">
+      </div>
+
+      <!-- Ítem con prefijo bloqueado -->
+      <div class="field">
+        <div class="field-label">Ítem</div>
+        <div class="item-wrap">
+          <span class="locked-seg">PTC</span>
+          <input type="text" id="item-middle" class="item-seg-input"
+                 placeholder="00001" autocomplete="off"
+                 data-pre="PTC" data-suf="" data-len="5" data-hidden="draft-item"
+                 oninput="handleItemInput(this)"
+                 onpaste="handleItemPaste(event)">
+          <button type="button" class="barcode-btn" title="Abrir cámara para escanear código de ítem"
+                  onclick="openBarcodeScanner('item-middle')">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="2" height="16"/><rect x="7" y="4" width="1" height="16"/>
+              <rect x="10" y="4" width="2" height="16"/><rect x="14" y="4" width="1" height="16"/>
+              <rect x="17" y="4" width="3" height="16"/>
+            </svg>
+          </button>
+        </div>
+        <input type="hidden" name="item" id="draft-item">
+      </div>
+
+      <div class="field field-span3">
+        <div class="field-label">Descripción del Producto <span class="req">*</span></div>
+        <input type="text" name="descripcion" id="draft-desc" placeholder="Descripción libre del producto" maxlength="200" required>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Tabla de inspección ───────────────────────── -->
+<div class="section">
+  <div class="section-title">Inspección de Calidad de Impresión</div>
+  <div class="section-body">
+    <div class="section-desc">Registra la inspección de cada muestra.</div>
+    <div class="table-wrap">
+      <table class="dtable" id="imp-tbl">
+        <thead>
+          <tr>
+            <th>#</th><th>Fecha</th><th>Hora</th>
+            <th>Adherencia Tinta</th><th>Inspección Visual</th><th>Validación Corrida</th>
+            <th>Código de Barras</th><th>Precorte</th><th>Repetición (pulg)</th>
+            <th>Libre Arrugas</th><th>Placa Despegada</th><th>Libre Retinte</th>
+            <th>Libre Bloqueo</th><th>Verif. Pantone</th><th>Textos Legibles</th>
+            <th>Comp. Estándar</th><th>Comentarios</th>
+          </tr>
+        </thead>
+        <tbody id="imp-body"></tbody>
+      </table>
+    </div>
+    <div class="row-actions" style="margin-top:10px;">
+      <button type="button" class="add-row-btn" onclick="addImpRow()">＋ Agregar fila</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Validación / Firmas ───────────────────────── -->
+<div class="sig-section">
+  <div class="sig-title">Validación de Turno</div>
+  <div class="sig-body">
+    <div class="sig-cards">
+
+      <div class="sig-card">
+        <div class="sig-card-head">Auditor</div>
+        <div class="sig-card-body">
+          <div class="field">
+            <div class="field-label">Seleccionar Auditor <span class="req">*</span></div>
+            <select name="auditor" class="person-select">
+              <option value="">— Seleccionar —</option>
+              {% for a in auditores %}
+              <option value="{{ a }}">{{ a }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-card">
+        <div class="sig-card-head">Supervisor</div>
+        <div class="sig-card-body">
+          <div class="field">
+            <div class="field-label">Seleccionar Supervisor <span class="req">*</span></div>
+            <select name="supervisor" class="person-select">
+              <option value="">— Seleccionar —</option>
+              {% for s in supervisores %}
+              <option value="{{ s }}">{{ s }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="sig-card">
+        <div class="sig-card-head auditor">Auditor de Calidad (sesión actual)</div>
+        <div class="sig-card-body">
+          <div class="readonly-field locked-auditor">{{ current_user.nombre }}</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Acciones ──────────────────────────────────── -->
+<div class="action-row">
+  <button type="submit" class="btn btn-primary">Guardar registro</button>
+  <button type="button" class="btn btn-ghost" onclick="window.print()">Imprimir</button>
+</div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function syncFecha() {
+  const now     = new Date();
+  const isoDate = now.toISOString().split('T')[0];
+  const hm      = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const hFecha  = document.getElementById('input-fecha');
+  const hHora   = document.getElementById('input-hora');
+  if (hFecha) { hFecha.value = isoDate; document.getElementById('display-fecha').value = isoDate; }
+  if (hHora)  { hHora.value  = hm;      document.getElementById('display-hora').value  = hm; }
+}
+syncFecha();
+setInterval(syncFecha, 30000);
+
+function setTurnoInput(t, btn) {
+  document.getElementById('input-turno').value = t;
+  document.querySelectorAll('.turno-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = b.style.color = b.style.borderColor = '';
+  });
+  btn.classList.add('active');
+  btn.style.background  = 'var(--red)';
+  btn.style.color       = 'white';
+  btn.style.borderColor = 'var(--red-dark)';
+  const nombres = {A:'Primer turno', B:'Segundo turno', C:'Tercer turno'};
+  const horas   = {A:'6:00 AM – 2:00 PM', B:'2:00 PM – 10:00 PM', C:'10:00 PM – 6:00 AM'};
+  document.getElementById('turno-nombre').textContent  = nombres[t];
+  document.getElementById('turno-horario').textContent = horas[t];
+}
+
+let impRowCount = 0;
+function addImpRow() {
+  const tbody = document.getElementById('imp-body');
+  const now   = new Date();
+  const fecha = now.toISOString().split('T')[0];
+  const hora  = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const n     = impRowCount++;
+
+  function sel(campo) {
+    return `<select name="row_${n}_${campo}"><option value="">—</option><option>OK</option><option>ND</option></select>`;
+  }
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${tbody.rows.length + 1}</td>
+    <td><input type="date" name="row_${n}_fecha" value="${fecha}"></td>
+    <td><input type="time" name="row_${n}_hora"  value="${hora}"></td>
+    <td>${sel('adherencia_tinta')}</td>
+    <td>${sel('inspeccion_visual')}</td>
+    <td>${sel('validacion_corrida')}</td>
+    <td>${sel('codigo_barras')}</td>
+    <td>${sel('precorte')}</td>
+    <td><input type="text" name="row_${n}_repeticion" placeholder="Repetición" maxlength="200"></td>
+    <td>${sel('libre_arrugas')}</td>
+    <td>${sel('placa_despegada')}</td>
+    <td>${sel('libre_retinte')}</td>
+    <td>${sel('libre_bloqueo')}</td>
+    <td>${sel('verif_pantone')}</td>
+    <td>${sel('textos_legibles')}</td>
+    <td>${sel('comp_estandar')}</td>
+    <td><input type="text" name="row_${n}_comentarios" placeholder="..." maxlength="200"></td>
+  `;
+  tbody.appendChild(tr);
+}
+</script>
+{% endblock %}

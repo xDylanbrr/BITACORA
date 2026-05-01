@@ -1,0 +1,100 @@
+{% extends 'bitacora/base.html' %}
+
+{% block title %}GTG — Registrar Usuario{% endblock %}
+
+{% block head_extra %}
+<style>
+.register-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+.register-span2 { grid-column:span 2; }
+@media (max-width:640px) {
+  .register-grid { grid-template-columns:1fr; }
+  .register-span2 { grid-column:span 1; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="section" style="max-width:680px;margin:24px auto;">
+  <div class="section-title">Registrar nuevo usuario</div>
+  <div class="section-body">
+
+    <div style="margin-bottom:18px;font-size:13px;color:var(--text-light);">
+      Solo el administrador puede registrar nuevos colaboradores en la plataforma.
+    </div>
+
+    <form method="post" action="{% url 'bitacora:registrar' %}">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div style="color:var(--red);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <div class="register-grid">
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">{{ form.nombre.label }} <span style="color:var(--red)">*</span></label>
+          {{ form.nombre }}
+          {% if form.nombre.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.nombre.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.rol.label }} <span style="color:var(--red)">*</span></label>
+          {{ form.rol }}
+          {% if form.rol.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.rol.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.codigo_empleado.label }} <span style="color:var(--red)">*</span></label>
+          {{ form.codigo_empleado }}
+          {% if form.codigo_empleado.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.codigo_empleado.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.departamento.label }}</label>
+          {{ form.departamento }}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.telefono.label }}</label>
+          {{ form.telefono }}
+          {% if form.telefono.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.telefono.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">{{ form.cedula.label }}</label>
+          {{ form.cedula }}
+          {% if form.cedula.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.cedula.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.email.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="auth-field register-span2">
+          <label class="auth-label">{{ form.password.label }} <span style="color:var(--red)">*</span></label>
+          {{ form.password }}
+          {% if form.password.errors %}<div style="color:var(--red);font-size:12px;margin-top:4px;">{{ form.password.errors.0 }}</div>{% endif %}
+        </div>
+
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap;">
+        <button class="btn btn-primary" type="submit" style="flex:1;min-width:160px;">
+          Registrar usuario
+        </button>
+        <a href="{% url 'bitacora:usuarios' %}" class="btn btn-ghost" style="flex:1;min-width:140px;text-align:center;">
+          Cancelar
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

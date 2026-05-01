@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTG — Acceso al Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Css/style.css' %}">
+</head>
+<body>
+
+<!-- ══════════════════════ AUTH ══════════════════════ -->
+<div class="auth-shell" id="authShell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-logo-wrap">
+        <img src="{% static 'img/logo.png' %}" onerror="this.onerror=null;this.style.display='none'" alt="GTG" style="height:100px;width:auto;display:block;margin-bottom:20px;object-fit:contain;">
+      </div>
+      <div class="auth-brand-kicker">Sistema de Control de Calidad</div>
+      <h1>Auditoría Digital de Producción</h1>
+      <p>Plataforma de registro y trazabilidad para los procesos de Extrusión, Impresión y Conversión.</p>
+      <div class="auth-brand-footer">© 2026 Global Technology Group — GTG</div>
+    </div>
+    <div class="auth-pane">
+      <form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+        <div class="auth-title">Bienvenido</div>
+        <div class="auth-sub">Accede con tu código de empleado y contraseña.</div>
+        <div class="auth-error" id="loginError">Código de empleado o contraseña incorrectos.</div>
+        <div class="auth-field">
+          <label class="auth-label">Código de empleado</label>
+          <input class="auth-input" id="loginEmployeeId" type="text" inputmode="numeric" placeholder="0001" maxlength="10" required autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label">Contraseña</label>
+          <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button class="auth-submit" type="submit">Entrar al formulario</button>
+        <div class="auth-note">Solo puedes acceder con usuarios creados por el administrador.</div>
+        <button type="button" onclick="toggleForgotPasswordBox()" style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;margin-top:10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;padding:0;display:block;">¿Olvidaste tu contraseña?</button>
+        <div id="forgotPasswordBox" class="hidden" style="margin-top:14px;padding:14px 16px;background:#FAFBFC;border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:10px;font-weight:600;">Ingresa tu código de empleado para solicitar un restablecimiento:</div>
+          <div class="auth-field" style="margin-bottom:10px;">
+            <label class="auth-label">Código de empleado</label>
+            <input class="auth-input" id="forgotEmployeeId" type="text" inputmode="numeric" placeholder="0001" maxlength="10">
+          </div>
+          <button type="button" onclick="requestPasswordReset()" class="auth-submit" style="margin-top:4px;">Enviar solicitud</button>
+          <div id="forgotMsg" style="display:none;margin-top:10px;padding:10px 12px;border-radius:8px;font-size:12px;font-weight:600;background:var(--green-soft);color:var(--green);border:1px solid #86EFAC;"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- app.js carga la lógica compartida -->
+<script src="{% static 'app.js' %}?v=4004"></script>
+<script>
+  // Si ya hay sesión activa, redirigir directamente al app
+  (function() {
+    const session = getSession();
+    if (session) { window.location.href = '{% url "bitacora:index" %}'; }
+  })();
+
+  // Sobrescribir enterApp: en lugar de mostrar/ocultar shells, navegar a index
+  enterApp = function(user) {
+    window.location.href = '{% url "bitacora:index" %}';
+  };
+</script>
+</body>
+</html>

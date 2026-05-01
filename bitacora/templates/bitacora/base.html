@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}GTG — Auditoría de Calidad{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'Css/style.css' %}">
+<style>
+@keyframes gtg-scan {
+  0%,100%{top:12%}
+  50%{top:80%}
+}
+#bc-scan-line{
+  position:absolute;left:0;right:0;height:2px;
+  background:rgba(239,68,68,.85);
+  box-shadow:0 0 8px rgba(239,68,68,.9);
+  animation:gtg-scan 1.8s ease-in-out infinite;
+  pointer-events:none;
+}
+</style>
+{% block head_extra %}{% endblock %}
+</head>
+<body>
+
+<div id="appShell">
+
+  <!-- ─── Topbar ─────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">
+        <img src="{% static 'img/logo.png' %}" alt="GTG" style="height:42px;width:auto;display:block;">
+      </div>
+      <div class="brand-title">Auditoría de Calidad — Formularios Digitales</div>
+    </div>
+
+    <div class="topbar-date" id="topbarDate"></div>
+
+    <div class="topbar-user">
+      <button class="user-chip" type="button" onclick="toggleUserMenu()" id="userChipBtn">
+        <div class="user-avatar">{{ current_user.nombre|slice:":2"|upper }}</div>
+        <div class="user-meta">
+          <div class="user-name">{{ current_user.nombre }}</div>
+          <div class="user-role">{{ current_user.rol }}</div>
+        </div>
+        <svg style="width:14px;height:14px;margin-left:4px;color:var(--muted);flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      <div class="user-menu" id="userMenu">
+        <div class="user-menu-card" style="display:flex;align-items:center;gap:10px;">
+          <div style="width:38px;height:38px;border-radius:9px;background:var(--red);display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:700;font-size:14px;color:white;flex-shrink:0;">
+            {{ current_user.nombre|slice:":2"|upper }}
+          </div>
+          <div>
+            <div class="user-menu-name">{{ current_user.nombre }}</div>
+            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:1px;">{{ current_user.rol }}</div>
+            {% if current_user.email %}<div class="user-menu-email">{{ current_user.email }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="user-menu-actions">
+          <a href="{% url 'bitacora:logout' %}" class="user-menu-btn logout" style="text-decoration:none;display:block;">
+            Cerrar sesión
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── Navegación principal ──────────────────────────────────── -->
+  <nav class="nav-tabs-bar">
+    <a href="{% url 'bitacora:extrusion' %}"
+       class="nav-tab {% if request.resolver_match.url_name == 'extrusion' %}active{% endif %}">
+      Extrusión
+    </a>
+    <a href="{% url 'bitacora:impresion' %}" id="nav-impresion"
+       class="nav-tab {% if request.resolver_match.url_name == 'impresion' %}active{% endif %}">
+      Impresión
+    </a>
+    <a href="{% url 'bitacora:conversion' %}" id="nav-conversion"
+       class="nav-tab {% if request.resolver_match.url_name == 'conversion' %}active{% endif %}">
+      Conversión
+    </a>
+    <a href="{% url 'bitacora:historial' %}"
+       class="nav-tab {% if request.resolver_match.url_name == 'historial' %}active{% endif %}">
+      Historial
+    </a>
+    {% if current_user.is_admin %}
+    <a href="{% url 'bitacora:usuarios' %}"
+       class="nav-tab {% if request.resolver_match.url_name in 'usuarios,registrar' %}active{% endif %}">
+      Usuarios
+    </a>
+    {% endif %}
+  </nav>
+
+  <!-- ─── Mensajes Django ───────────────────────────────────────── -->
+  {% if messages %}
+  <div style="padding:0 24px;">
+    {% for msg in messages %}
+    <div class="alert-banner alert-{{ msg.tags }}" style="margin-top:12px;padding:12px 18px;border-radius:10px;font-weight:600;font-size:14px;
+      {% if 'success' in msg.tags %}background:#F0FDF4;color:#16A34A;border:1px solid #86EFAC;
+      {% elif 'warning' in msg.tags %}background:#FFFBEB;color:#D97706;border:1px solid #FCD34D;
+      {% elif 'error' in msg.tags %}background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;
+      {% else %}background:#EFF6FF;color:#1D4ED8;border:1px solid #93C5FD;{% endif %}">
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ─── Contenido principal ───────────────────────────────────── -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div><!-- #appShell -->
+
+<div id="toastContainer" style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
+<!-- ─── Modal escáner de cámara ───────────────────────────────── -->
+<div id="barcodeModal"
+     onclick="if(event.target===this)closeBarcodeModal()"
+     style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.88);
+            align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#111827;border-radius:20px;overflow:hidden;
+              width:min(380px,100%);box-shadow:0 24px 64px rgba(0,0,0,.7);">
+
+    <!-- cabecera -->
+    <div style="padding:16px 18px;display:flex;align-items:center;justify-content:space-between;
+                border-bottom:1px solid rgba(255,255,255,.08);">
+      <div>
+        <div style="color:#fff;font-weight:700;font-size:15px;font-family:'Outfit',sans-serif;">
+          Escáner de Código de Barras
+        </div>
+        <div id="bc-label" style="color:rgba(255,255,255,.45);font-size:12px;margin-top:3px;
+                                   font-family:'JetBrains Mono',monospace;"></div>
+      </div>
+      <button onclick="closeBarcodeModal()"
+              style="background:rgba(255,255,255,.1);border:none;border-radius:8px;
+                     width:34px;height:34px;cursor:pointer;color:#fff;font-size:20px;
+                     display:flex;align-items:center;justify-content:center;line-height:1;">
+        &times;
+      </button>
+    </div>
+
+    <!-- vista de cámara -->
+    <div style="position:relative;background:#000;aspect-ratio:1/1;overflow:hidden;">
+      <video id="barcodeVideo" autoplay playsinline muted
+             style="width:100%;height:100%;object-fit:cover;display:block;"></video>
+
+      <!-- zona de escaneo con marcadores de esquina -->
+      <div style="position:absolute;inset:14%;pointer-events:none;">
+        <div style="position:absolute;inset:0;border:1px solid rgba(255,255,255,.2);border-radius:4px;"></div>
+        <!-- esquina TL -->
+        <div style="position:absolute;top:-2px;left:-2px;width:22px;height:22px;
+                    border-top:3px solid #ef4444;border-left:3px solid #ef4444;border-radius:4px 0 0 0;"></div>
+        <!-- esquina TR -->
+        <div style="position:absolute;top:-2px;right:-2px;width:22px;height:22px;
+                    border-top:3px solid #ef4444;border-right:3px solid #ef4444;border-radius:0 4px 0 0;"></div>
+        <!-- esquina BL -->
+        <div style="position:absolute;bottom:-2px;left:-2px;width:22px;height:22px;
+                    border-bottom:3px solid #ef4444;border-left:3px solid #ef4444;border-radius:0 0 0 4px;"></div>
+        <!-- esquina BR -->
+        <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;
+                    border-bottom:3px solid #ef4444;border-right:3px solid #ef4444;border-radius:0 0 4px 0;"></div>
+        <!-- línea de escaneo animada -->
+        <div id="bc-scan-line"></div>
+      </div>
+    </div>
+
+    <!-- estado -->
+    <div style="padding:14px 18px;text-align:center;">
+      <div id="bc-status" style="color:rgba(255,255,255,.65);font-size:13px;min-height:20px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="{% static 'app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

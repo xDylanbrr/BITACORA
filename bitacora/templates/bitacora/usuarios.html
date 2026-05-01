@@ -1,0 +1,63 @@
+{% extends 'bitacora/base.html' %}
+
+{% block title %}GTG — Usuarios{% endblock %}
+
+{% block content %}
+
+<div class="section">
+  <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>Gestión de Usuarios</span>
+    <a href="{% url 'bitacora:registrar' %}" class="btn btn-primary" style="font-size:13px;">＋ Nuevo usuario</a>
+  </div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table class="dtable">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th>Email</th>
+            <th>Departamento</th>
+            <th>Estado</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td><code>{{ u.codigo_empleado }}</code></td>
+            <td><strong>{{ u.nombre }}</strong></td>
+            <td><span class="badge {% if u.rol == 'Administrador' %}badge-red{% elif u.rol == 'Supervisor' %}badge-amber{% else %}badge-blue{% endif %}">{{ u.rol }}</span></td>
+            <td>{{ u.email|default:"—" }}</td>
+            <td>{{ u.departamento|default:"—" }}</td>
+            <td>
+              {% if u.activo %}
+              <span class="badge" style="background:#F0FDF4;color:#16A34A;border:1px solid #86EFAC;">Activo</span>
+              {% else %}
+              <span class="badge" style="background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5;">Inactivo</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.pk != current_user.pk %}
+              <form method="post" action="{% url 'bitacora:toggle_usuario' u.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost" style="font-size:12px;padding:4px 10px;">
+                  {% if u.activo %}Desactivar{% else %}Activar{% endif %}
+                </button>
+              </form>
+              {% else %}
+              <span style="font-size:12px;color:var(--text-light);">(tú)</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--text-light);">No hay usuarios registrados.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
